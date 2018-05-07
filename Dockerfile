@@ -1,6 +1,6 @@
 FROM alpine:3.7
 
-RUN apk add --no-cache --update openssh-client python py-libmount rsync
+RUN apk add --no-cache --update openssh-client python py-libmount py-requests rsync
 
 ADD rsyncbackup-client.py /usr/local/bin/rsyncbackup-client.py
 
