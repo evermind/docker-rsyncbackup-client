@@ -238,6 +238,12 @@ def setup_ssh(config):
 		logging.info('Creating %s/id_rsa'%confdir)
 		subprocess.call(['ssh-keygen','-N','','-t','rsa','-f',os.path.join(confdir,'id_rsa')])
 
+	with open(os.path.join(confdir,'id_rsa.pub'),'r') as file:
+		ssh_key=file.read().split()
+		logging.info('Use the following key on the backup server:')
+		logging.info('  [BACKUP_CLIENT_NAME]:%s:%s',ssh_key[0],ssh_key[1])
+
+
 def get_next_schedule(hour,minute):
 	now = datetime.now()
 	schedule = now.replace(hour=hour,minute=minute,second=0,microsecond=0)
