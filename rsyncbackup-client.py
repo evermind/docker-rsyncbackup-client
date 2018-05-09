@@ -277,8 +277,8 @@ def main():
 
 	def time_type(s, pat=re.compile(r"(\d{1,2}):(\d{2})")):
 		if s=='auto':
-			s=get_rancher_host_label('backup_schedule'):
-			if is None:
+			s=get_rancher_host_label('backup_schedule')
+			if s is None:
 				raise argparse.ArgumentTypeError("Got 'auto' as schedule time but found no rancher host label 'backup_schedule'.")
 		time = pat.match(s)
 		if not time:
