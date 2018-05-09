@@ -26,6 +26,16 @@ def get_rancher_host_label(label_name):
 		pass
 	return None
 
+def get_rancher_host_name(default=None):
+	try:
+		import requests
+		response=requests.get('http://rancher-metadata/latest/self/host/name')
+		if response.status_code==200:
+			return response.text
+	except:
+		pass
+	return default
+
 
 def setup():
 	setup_logging()
@@ -241,8 +251,8 @@ def setup_ssh(config):
 	with open(os.path.join(confdir,'id_rsa.pub'),'r') as file:
 		ssh_key=file.read().split()
 		logging.info('Use the following key on the backup server:')
-		logging.info('  [BACKUP_CLIENT_NAME]:%s:%s',ssh_key[0],ssh_key[1])
-
+		client_name=get_rancher_host_name('[BACKUP_CLIENT_NAME]')
+		logging.info('  %s:%s:%s',client_name,ssh_key[0],ssh_key[1])
 
 def get_next_schedule(hour,minute):
 	now = datetime.now()
@@ -266,6 +276,10 @@ def main():
 	mount_dirs(config)
 
 	def time_type(s, pat=re.compile(r"(\d{1,2}):(\d{2})")):
+		if s=='auto':
+			s=get_rancher_host_label('backup_schedule'):
+			if is None:
+				raise argparse.ArgumentTypeError("Got 'auto' as schedule time but found no rancher host label 'backup_schedule'.")
 		time = pat.match(s)
 		if not time:
 		   raise argparse.ArgumentTypeError("Invalid time format")
