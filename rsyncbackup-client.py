@@ -41,8 +41,8 @@ def setup():
 	setup_logging()
 	backup_server=get_env('BACKUP_SERVER',None)
 	if backup_server is None:
-		backup_server=get_rancher_host_label('backup')
-		logging.info('Got BACKUP_SERVER=%s from rancher host label "backup"',backup_server)
+		backup_server=get_rancher_host_label('backup_server')
+		logging.info('Got BACKUP_SERVER=%s from rancher host label "backup_server"',backup_server)
 	if backup_server is None:
 		logging.error("Missing environment variable BACKUP_SERVER")
 		sys.exit(os.EX_USAGE)
