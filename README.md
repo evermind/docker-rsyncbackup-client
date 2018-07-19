@@ -14,6 +14,7 @@ docker run -it --rm \
    -e VOL_ROOT_EXCLUDE=tmp,var/cache,var/lib/docker \
    -e VOL_DATA_TIMEOUT=2h \
    -v /:/data/volumes/ROOT:ro \
+   evermind/rsyncbackup-client
    run
 ```
 
@@ -21,6 +22,7 @@ The following environment variables can be used:
 
 * BACKUP_SERVER (required) - hostname of a server where the server-docker-image runs on
 * BACKUP_SERVER_PORT (optional, default: 22) - port of the server
+* BACKUP_SERVER_USER (optional, default: backup) - user on the server
 * BACKUP_SERVER_PUBLIC_KEY (optional) - the rsa public key of the server. If ommitted, the trust relationship must be set manually (i.e. create known_hosts file in /data/conf volume)
 * BACKUP_VOLUMES (required) - a comma-separated list of volume identifiers
 * VOL_{VOLUME_IDENTIFIER}_EXCLUDE (optional) - a comma-separated list of files or folder to exclude from backup
@@ -41,3 +43,9 @@ The following commands can be executed:
 * run [VOLUME1 VOLUME2 ...] - Executes the backup - optionally one or more volumes can be specified
 * schedule HH:MM - schedules the backup on every day at the given time
 
+## Encrypted backups
+
+* Setup fuse on the host
+* Setup encfs reverse encryption on the volumes
+* Create a file encfs_DATA.pass in the config dir, containing the password
+* Run with additional options: --device /dev/fuse -e VOL_DATA_ENCRYPT=True

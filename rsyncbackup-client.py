@@ -3,6 +3,7 @@
 import logging, os, sys, argparse, subprocess, time, re
 import libmount as mnt
 from datetime import datetime, timedelta
+import subprocess
 
 def setup_logging():
 	logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
@@ -72,6 +73,7 @@ def setup():
 		vc={
 		  'vol':	   vol,
 		  'dir':	   get_env('VOL_%s_PATH'%vol,os.path.join(config['volume_dir'], vol)),
+		  'encrypt':   bool(get_env('VOL_%s_ENCRYPT'%vol,False)),
 		  'excludes':  filter(None,get_env('VOL_%s_EXCLUDE'%vol,'').split(",")),
 		  'timeout':   timeout
 		}
@@ -219,11 +221,39 @@ def bind_mount(src,dst):
 		logging.error('Failed to mount: %s. Please ensure that you are running as root with docker capability SYS_ADMIN.',e)
 		sys.exit(os.EX_IOERR)
 
+def encfs_mount(src,dst,passfile):
+	if os.path.ismount(dst):
+		logging.debug("Volume %s is already mounted to %s",src,dst)
+		return
+
+	if not os.path.exists(dst):
+		os.makedirs(dst)
+
+	logging.info("Encfs reverse-mounting volume %s to %s",src,dst)
+
+	subprocess.check_call(['encfs','--reverse','--extpass=cat %s|tr -d \'\n\''%passfile,src,dst])
+
 def mount_dirs(config):
 	for volume in config['volumes']:
 		voldir=volume['dir']
 		volume['mount_dir']=os.path.join(config['mount_dir'],volume['vol'])
-		bind_mount(voldir,volume['mount_dir'])
+		if volume['encrypt']:
+			if not os.path.exists('/dev/fuse'):
+				logging.error('/dev/fuse not found. Please run the container with "--device /dev/fuse".')
+				sys.exit(os.EX_IOERR)
+			if not os.path.exists(os.path.join(voldir,'.encfs6.xml')):
+				logging.error('Encfs configuration .encfs6.xml not found in %s. Please Setup encfs first.',voldir)
+				sys.exit(os.EX_IOERR)
+			passfile=os.path.join(config['conf_dir'],'encfs_%s.pass'%volume['vol'])
+			if not os.path.exists(passfile):
+				logging.error('Please put the enfs password in %s"',passfile)
+				sys.exit(os.EX_IOERR)
+
+			plaindir=os.path.join(config['mount_dir'],'_plain_%s'%volume['vol'])
+			bind_mount(voldir,plaindir)
+			encfs_mount(plaindir,volume['mount_dir'],passfile)
+		else:
+			bind_mount(voldir,volume['mount_dir'])
 
 def setup_ssh(config):
 	confdir=config['conf_dir']
