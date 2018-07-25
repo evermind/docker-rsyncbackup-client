@@ -269,7 +269,10 @@ def setup_ssh(config):
 				continue
 			key_parts=pubkey.split(':')
 			logging.info('  Adding %s %s',key_parts[0],key_parts[1])
-			known_hosts.append('[%s]:%s %s %s'%(config['server'],config['port'],key_parts[0],key_parts[1]))
+			if config['port']==22:
+				known_hosts.append('%s %s %s'%(config['server'],key_parts[0],key_parts[1]))
+			else:
+				known_hosts.append('[%s]:%s %s %s'%(config['server'],config['port'],key_parts[0],key_parts[1]))
 		with open(os.path.join(confdir,'known_hosts'),'w+') as file:
 			file.write('\n'.join(known_hosts))
 			file.write('\n')
